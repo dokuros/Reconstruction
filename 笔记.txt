@@ -1,0 +1,484 @@
+一、重构原则+最近看ROR的一些原则。
+
+为即将修改的代码建立一组可靠的测试环境。
+临时变量助长冗长而复杂的函数。
+最好不要再另一个对象的属性基础上运用switch语句。如果要switch也要在类自己的数据上使用。
+事不过三，三则重构。
+首先写出可调的程序，然后调整它以求获得足够速度。
+一个好的名字可以省去读函数内容的操作。
+每当需要注释说明时，可以被写进一个函数里，并以用途命名，关键不在函数长度，而在函数做什么，怎么做。
+条件和循环也是提炼信号。
+针对外界变化的所有相应修改，应该只发生在单一类中，这个类的所有内容随外界变化。
+一个函数使用几个类的功能，它应该被放在最多被此函数使用的数据一起。
+对于出现在不同类/方法内的一些绑在一起的数据，应该给它们设置对象。
+少用switch，switch代表重复。
+两个帽子原则：不要边写代码边重构，带上写代码的帽子，觉得需要重构了，再带上重构的帽子去做，如此反复。
+注释多写为什么这样，过多注释不一定是好，尝试重构。
+先编写测试代码可以将关注点放在接口而非实现。
+每当出现一个BUG，先写一个测试单元测试BUG。不要修改以前的测试单元，因为它可能会在修复BUG后出错。
+测试：异常，边界
+测试太多带来的效益呈现递减态势。但是我们尽量测试大多数BUG。
+小步前进，频繁测试。
+即使想要提炼的函数非常简单，只要新函数名能更好地示意代码意图，也应该提炼它。
+重构出来的函数优先使用private修饰，日后可以慢慢放开。
+重构时可能会有性能问题，但这不是主要问题，如果没有重构，好的优化方案就可能与你失之交臂。性能实在太糟糕，临时变量放回去也很容易。
+临时变量如果被赋值多次，尽量使它们只使用一次。
+JAVA只采用按值传递参数，因此对参数赋值一般不可取，不要对参数赋值。
+public不是java的全部，java值得封装的东西有很多。
+先写测试，再写类。
+去除控制标记，语句会清晰明了。
+“每一个函数只能有一个入口和一个出口”的观念会使人陷入代码的坏味道。
+条件反转有时候可以帮助写清晰的代码。
+if then else也代表重复，尽量不要写。
+使用空对象可以方便的处理很多东西，它一定是常量。非常适合使用Singleton模式。
+一个好习惯：明确地将“修改对象状态”的函数（修改函数）和“查询对象状态”的函数（查询函数）分开设计。
+继承是避免重复行为的一个强大工具。
+对于辣鸡代码，不必一开始就完成整个系统的重构，只需要满足需求就行了，反正之后还可以回来重构。
+
+        ROR：
+        Q：什么时候编写测试？
+测试代码特别简短，倾向于先编写测试；
+对想实现的功能不是特别清楚，倾向于先编写应用代码，然后再编写测试，并改进实现方式；
+为安全相关的功能先编写测试；
+只要发现一个问题，就编写一个测试重现这种问题，避免回归，然后再编写应用代码修正问题；
+尽量不为以后可能修改的代码（例如 HTML 结构的细节）编写测试；
+重构之前要编写测试，集中测试容易出错的代码。
+
+
+              二、主要整合内容。（这部分比较乱，使用Ctrl+F查阅比较方便。
+
+Duplicated Code
+同一个类两个函数有相同表达式：Extract Method(110) 提炼相同代码。
+互为兄弟子类内含有相同表达式：Extract Method(110) -> Pull Up Method(332) 推入超类 ->Form Template Method(345) 获得Template Method设计模式 -> Substitute Algorithm(139)替换算法。
+毫不相关的类：Extract Class(149)
+
+      2. Long Method
+99%场合使用：Extract Method(110)找到适合在一起的提炼即可。
+有大量参数和临时变量：Replace Temp with Query(120)消除临时变量，Introduce Parameter Object(295)和Preserve Whole Object(288)可将过长参数列变简洁。还不行就用Replace Method with Method Object(135)。
+条件和循环时：Decompose Conditional(238)处理条件。Extract Method(110)处理循环。
+
+      3. Large Class
+类太大：Extract Class(149)甚至可以Extract Subclass(330)提取子类。先确定客户端如何使用他们，再运用Extract Interface(341)为每一个使用方式提炼一个接口。这可以帮助看清如何分解类。
+如果是个GUI类：使用Duplicate Observed Data(189)。
+
+      4. Long Parameter List过长参数列
+如果向已有对象发出一条请求就可以取代一个参数，使用Replace Parameter with Method(292)。
+使用Preserve Whole Object(288)将同一对象的数据收集起来，并以对象替换。
+缺乏合理对象归属：使用Introduce Parameter Object(295)制造参数对象。
+
+      5. Divergent Change发散式变化
+一个类受多个变化的影响：Extract Class(149)
+
+      6. Shotgun Surgery霰弹式修改
+每遇到一个变化，要在不同类做修改：Move Method(142)和Move Field(146)把需要修改的代码放进同一个类。使用Inline Class(154)把一系列相关行为放进一个类。
+
+      7. Feature Envy依恋情结
+函数为了计算某个值，从另一个对象调用一堆取值函数：把这个使用Move Method(142)把它移到该去的地方。使用Extract Method(110)把这一部分提炼到独立函数，使用Move Method(142)放在该去的地方。如果有多个类的功能，使用Extract Method(110)分解为多个小函数，再放在调用最多数据的类里。
+
+      8. Data Clumps数据泥团
+对于多个地方绑定在一起的数据：使用Extract FClass(149)将他们提炼到一个独立对象。然后转到函数签名，使用Introduce Parameter Object(295)或Preserve Whole Object(288)为他减肥。这样可以简化调用。
+
+      9. Primitive Obsession基本类型偏执
+对象可以在小类型创建小对象：使用Replace Data Value with Object(175)进入对象世界。
+替换的数据值是类型码，并不影响行为：使用Replace Type Code with Class(218)
+与类型码相关的条件表达式：使用Replace Type Code with Subclass(213)或Replace Type Code wtih State/Strategy(227)处理。
+总被放一起的字段：使用Extract Class(149)
+参数列看到基本型数据：使用Introduce Parameter Object(295)。
+从数组中挑选数据：使用Replace Array with Object(186)
+
+      10. Switch Statements：Switch惊悚现身
+使用多态代替Switch：Extract Method(110)->Move Method(142)->Replace Type Code with Subclasses(223)或Replace Type Code with State/Strategy(227)完成继承结构->Replace Conditional with Polymorphism(255)
+如果是单一函数的选择示例：使用Replace Parameter with Explicit Method(285)
+如果选择条件有null：使用Introduce Null Object(260)
+
+      11. Parallel Inheritance Hierarchies平行继承体系
+每当为某各类增加子类，也要为另一个类增加子类：让继承体系的实例引用另一个继承体系的实例。再使用Move Method(142)和Move Field(146)。
+
+
+      12. Lazy Class冗赘类
+一个类变得不再有价值：使用Collapse Hierarchy(344)和Inline Class(154)。
+
+      13. Speculative Generality夸夸其谈未来性
+对于未来可能会有的方法或类：如果它没被用到，使用Collapse Hierarchy(344)或Inline Class(154)。
+某些参数未被使用：Remove Parameter(154)
+函数名称有多余抽象意味：Rename Method(273)
+
+      14. Temporary Field令人迷惑的暂时字段
+某个实例变量仅因特定情况而设：使用Extract Class(149)提取这个情况并把相关代码放进去。也可以用Introduce Null Object(260)在“变量不合法”的情况创建Null对象。
+复杂算法需要好几个变量：Extract Class(149)把这些变量和其他相关函数提炼到一个类作为函数对象Beck。
+
+
+      15. Message Chains过度耦合的消息链
+一个对象请求一个对象又请求一个对象…：使用Hide Delegate(157) 可以在消息链不同位置使用。更好的做法：Extract Class(149)提炼到一个函数，Move Method(142)推入消息链。
+
+      16. Middle Man中间人
+过度委托：使用Remove Middle Man(160)和负责的对象打交道。运用InlineMethod(117)放进调用端。如果Middle Man还有其他行为，使用Replace Delegation with Inheritance(355)变成实责对象子类，就可以扩展原对象行为。
+
+      17. Inappropriate Intimacy狎昵关系
+两个类过去亲密：使用Move Method(142)和Move Field(146)划清界限。或使用Change Bidirectional Association to Unidirectional(200)让一个类斩断关系。Extract Class(146)提炼到一个安全地点。或使用Hide Delegate(157)
+
+      18. Alternative Classes with Different Interfaces异曲同工的类
+两个函数做同一件事，却有不同签名。使用Rename Method(273)根据用途命名。使用Move Method(142)将某些行为移入类直到协议相同。使用Extract Superclass(336)可以减少重复冗余代码。
+
+      19. Incomplete Library Class不完美的库类
+修改库类的函数：使用Introduce Foreign Method(162)
+添加额外行为：使用Introduce Local Extension(164)
+
+      20. Data Class纯稚的数据类
+有一些用于访问（读写）字段的函数，其他类过分操作它们：使用Encapsulate Field(206)封装对不该被其他类修改的字段，使用Remove Setting Method(300)对这些点Move Method(142)把它们调到Data Class不能搬移整个就搬部分，不久就可以使用Hide Method(303)把它们隐藏。
+
+      21. Refused Bequest被拒绝的遗赠
+继承设计错误：新建兄弟类，使用Push Down Method(328)和Push Down Field(329)把用不到的推给兄弟类。超类只持有所有子类共享的东西。
+子类复用了超类行为，却又不愿意支持超类接口：使用Replace Inheritance with Delegation(352)达到目的。
+
+      22. Comments过多注释
+太多注释意味着坏味道：使用Extract Method(110)，还需要注释的话使用Rename Method(273)，如果需要注释需求使用Introduce Assertion(267)
+
+
+对于操作“方法”的一些重构手法：
+
+     1. Extract Method(110)
+一个过长的需要注释的代码出现时使用。
+返回变量多余一个：挑选另一块代码提炼。
+用Replace Temp with Query(120)/Replace Method with Method(135)减少临时变量。
+
+   2. Inline Method(内联函数)
+手上有一群组织不合理的函数：先内联到大型函数，再提炼出小型函数。
+委托太多：使用内联函数，找出有用/无用的间接层。
+不能具有多态性。
+遇到递归调用，多返回点，内联至另一个对象而该对象无提供访问函数等复杂情况不该使用这个手法。
+
+   3. Inline Temp(内联临时变量)
+Replace Temp with Query(120)的一部分。
+
+   4. Replace Temp with Query(以查询取代临时变量)
+局部变量变成查询式可以方便看清函数构造。
+临时变量赋值多次的情况：先使用Split Temporary Variable(128)或Separate Query from Modifier(279)使情况变简单。
+
+   5. Introduce Explaning Variable引入解释性变量
+引入final解释性变量增强理解。
+一般使用Extract Method解释代码更有意义。
+在Extract Method需要大量工作量时，使用它清理代码。
+
+   6. Split Temporary Variable分解临时变量
+临时变量被多次使用时使用它分解为多个final临时变量。临时变量使用多次会引起歧义。
+如果临时变量有[i=i+表达式]（引用自身）形式，它就是结果收集变量，不该分解。
+
+   7. Remove Assignments to Parameters移除对参数的赋值
+JAVA只采用按值传递参数：使用它移除对参数赋值，实在要赋值使用[.方法]修改。
+面对出参数类型的语言可以无视这个手法。
+在较长的函数中使用final修饰参数，防止参数被修改。
+
+   8. Replace Method with Method Object以函数对象取代函数（函数中的大杀器）
+局部变量导致无法提取函数使用：把函数放进对象中，在同一对象将大型函数分解成多个小型函数。
+新类->final字段->构造函数->建立compute()函数->编译->拆分。
+
+   9. Substitute Algorithm替换算法
+有时候壮士断腕，直接替换更便捷的算法可以减少修改成本。
+对于测试用例，以新旧算法执行，观察结果是否相同，可以快速确定问题所在。
+
+     对于操作“对象”的一些重构手法：
+
+   1. Move Method搬移函数
+函数与另一个类有更多引用。
+如果无法决定是否移动一个函数，先放着看看其他函数。
+特性随着函数搬移。以特征为基点搬移函数。
+原函数可以删除，也可以委托，这需要决断。
+
+   2. Move Field搬移字段
+某个字段被其所驻类外另一个类更多使用。
+如果移动的是频繁访问的字段函数，先使用SelfEncapsulate Field也许更有帮助。
+源字段的引用替换为目标函数调用。
+先生成构造方法Self Encapsulate Field(171)，再做委托更好用。
+
+   3. Extract Class提炼类
+当某个类做了两个类该做的事：使用它提炼新的类。
+提炼的类最好不要双向连接。
+提炼完成后，考虑权限问题。
+
+   4. Inline Class将类内联化
+某个类没做太多事情：使用它移到另一个类里。与Extract Class相对。
+
+   5. Hide Delegate隐藏“委托关系”
+客户通过委托调用另一个对象，在服务类建立客户所需函数，隐藏委托关系。
+考虑访问权限。
+
+   6. Remove Middle Man移除中间人
+某个类过多简单委托动作，让客户直接调用受托类。Hide Delegate的反面。
+
+   7. Introduce Foreign Method引入外加函数
+为提供服务类增加一个函数，但无法修改这个类：建立一个函数，并以第一参数传入服务类实例。
+
+   8. Introduce Local Extension引入本地扩展
+需要为服务类提供额外函数，但无法修改这个类：建立一个新类，使它包含额外函数，让这个扩展名成为源类的子类或包装类。
+建立拓展类->加入转型构造函数->加入新特性->将原对象替换扩展对象->原始类定义的外加函数搬移到扩展类。
+一般不要重新复写函数，使用扩展类可以很好解决问题。便于查找。
+
+
+重新组织数据系手法：
+
+Self Encapsulate Field自我封装字段 196
+直接访问一个字段，但字段之间耦合关系逐渐笨拙：为字段生成get/set方法，以函数访问。
+
+   2. Replace Data Value with Object以对象取代数据值 200
+有一个数据项，需要与其他数据和行为一起使用才有意义：将数据变成对象。
+
+
+   3. Change Value to Reference将值对象改为引用对象 204
+一个类衍生许多彼此相等实例，需要将它们替换为同一个对象：将这个值变为引用对象。
+使用Replace Constructor with Facotry Method->测试->决定对象负责提供访问新对象的途径->决定引用对象预先创建好还是动态创建->修改工厂函数，令其返回引用对象->测试
+
+   4. Change Reference to Value将引用对象改为值对象 208
+有一个引用对象，很小且不可变，且不易管理：将它变成一个值对象。
+值对象的特性，它是不可变的。
+使用Remove Setting Method(300)将它变为不可变->建立equalss()和hashCode()->测试->考虑删除工厂，构造声明函数为public
+
+
+   5. Replace Array with Object以对象取代数组
+有一个数组，元素格子代表不同东西：以对象替换数组，对于数组中每个元素，以一个字段表示。
+
+
+   6. Duplicate Observed Data复制“被监视数据”
+有一些领域数据置身于GUI控件，领域函数需要访问这些数据：将数据复制到领域对象，建立Observer模式，用以同步领域对象和GUI对象内的重复数据。
+
+
+   7. Change Unidirectional Association to Bidirectional将单向关联改为双向关联
+两个类需要使用对方特性，但其间只有一条单向连接：添加反向指针，并使修改函数能同时更新两条连接。
+使用不当的话，反向指针容易造成混乱，但只要习惯这种手法，其实并不太复杂。
+在被引用类中增加一个字段，保存反向指针->决定由哪个类（引用端还是被引用端）控制关联关系->在被控端建立一个辅助函数，命名应指出它的有限用途->如果既有的修改函数在控制端，让它负责更新反向指针->如果在被控端，就在控制端建立一个控制函数，并让既有的修改函数调用这个新建的控制函数。
+
+
+   8. Change Bidirectional Association to Unidirectional将双向关联改为单向关联 225
+两个类之间有双向关联，但如今其中一个类不再需要另一个类的特性。
+找出该去除的指针->如果使用了取值函数，先用Self Encapsulate Field将待删除字段自我封装，然后使用Subsititute Algorithm对付取值函数。->如果客户未使用取值函数，直接修改带删除字段的所有被引用点。->如果没有任何函数使用待删除字段，移除所有对字段的更新逻辑。
+
+
+   9. Replace Magic Number with Symbolic Constant以字面常量取代魔法数
+有一个字面数值，带有特别含义：创造一个常量，根据意义命名，并将上述字面数值替换为这个常量。
+声明一个常量->找出引用点->检查是否可使用新声明变量替换魔法数->魔法数替换完毕，整个程序应运转如常。
+
+
+   10. Encapsulate Field封装字段
+类中存在一个public字段：将它声明为private，并提供相应访问函数。
+提供get/set。
+
+
+   11. Encapsulate Collection封装集合
+有个函数返回集合：让这个函数返回集合的只读副本，并在这个类中提供添加/移除集合元素的函数。
+
+
+   12. Replace Record with Data Class以数据类取代记录
+需要面对传统编程环境中记录结构：为该记录创建一个哑数据对象。
+新建一个类表示这个记录->对于每项数据，在新建类中建立对应private字段，并提供相应取值/设值函数。
+
+
+   13. Replace Type Code with Class以类取代类型码
+类之中一个数值类型码，但并不影响类行为：以一个新的类替换该数值类型码。
+
+
+   14. Replace Type Code with Subclasses以子类取代类型码 248
+有一个不可变类型码，它会影响类的行为：以子类取代这个类型码。
+
+
+
+   15. Replace Type Code with State/Strategy以State/Strategy取代类型码 252
+有一个类型码，会影响类的行为，但无法通过继承消除：以状态对象取代类型码。
+类型码抽象成类，可进行的操作就会变多。
+
+
+   16. Replace Subclass with Fields以字段取代子类 257
+各个子类的唯一差别只在“返回常量数据”函数上：修改这些函数，使它们返回超类中某个新增字段，然后销毁子类。
+复杂而冗余的类关系会导致代码的坏味道。
+
+
+简化条件表达式系手法：
+
+  1. Decompose Conditional分解条件表达式 263
+有一个复杂的条件语句：从if then else 三个段落中分别提炼出独立函数。
+逻辑里的东西是非常难读的，与其加一个注释不如直接Extract Method。
+
+
+    2. ConsolIDAte Conditional Expression合并条件表达式 265
+有一系列条件测试，都得到相同效果：将这些测试合并为一个条件表达式，并将这个条件表达式提炼成独立函数。
+有时候有一堆if的测试也很难读，干脆把它们一起提取了。
+一堆if 使用或 ；if嵌套使用 与
+
+
+    3. ConsolIDAte Duplicate Coditional Fragments合并重复的条件片段 268
+再条件表达式的每个分支上有相同的一段代码：将这段重复代码搬移到条件表达式外。
+去除重复代码。
+
+
+    4. Remove Control Flag移除控制标记 270
+在一系列bool表达式中，某个变量带有“控制标记”作用：以break语句或return 语句取代控制标记。
+去除控制标记，语句会清晰明了。
+有时候会有副作用，使用Separate Query from Modifier将副作用移除。
+
+
+    5. Replace Nested Conditinal with Guard Clauses 以卫语句取代嵌套条件表达式 275
+函数中条件逻辑使人难以看清正常执行路径：使用卫语句表现所有特殊情况。
+就是不用else，全部用if/return达成一步步过滤的状态。
+“每一个函数只能有一个入口和一个出口”的观念会使人陷入代码的坏味道。
+条件反转有时候可以帮助写清晰的代码。
+
+
+    6. Replace Conditinal with Polymorphism 以多态取代条件表达式 280
+手上有个条件表达式，它根据对象类型不同选择不同行为。：将这个条件表达式的每个分支放进一个子类内的覆写函数中，然后将原始函数声明为抽象函数。
+就是使用多态把switch给拆开到类里面去了。
+
+
+    7. Introduce Null Object引入null对象 285
+你需要再三检查某对象是否为Null： 将null值替换为null对象
+[size=13.3333px]使用空对象可以方便的处理很多东西，它一定是常量。非常适合使用Singleton模式。
+[size=13.3333px]用空对象继承原对象，原对象isNull为false空对象为true，以后.isNull()即可知道是否为空。甚至可以添加一个接口Nullable昭示大家这是一个空对象。
+空对象是一个特例类。
+
+
+
+    8. Introduce Assertion引入断言 292
+某一段代码需要对程序状态做出某种假设：以断言明确表现这种假设
+使用断言“一定为真”的情况，可以帮助程序不出错，滥用断言会导致逻辑混乱。
+
+[size=13.3333px]
+
+简化函数调用系手法。
+
+Rename Method函数改名 298
+函数的名称未能揭示函数的用途。修改函数名称。
+改函数名能帮助后来者理解程序。在这个手法里你甚至可以修改参数顺序。
+
+   2. Add Parameter添加参数 300
+某个函数需要从调用端得到更多信息：为此函数添加一个对象参数，让该对象带进函数所需信息。
+使用这个手法会增加过多参数的坏味道。
+
+
+   3. Remove Parameter移除参数 302
+函数本体不再需要某个函数。将该参数去除。
+函数的无用参数可以去除，多态的无用参数可以保留。
+
+
+   4. Separate Query from Modifier将查询函数和修改函数分离 304
+某个函数即返回对象状态值，又修改对象状态：建立两个不同的函数，其中一个负责查询，另一个负责修改。
+将动作分开，浪费一点性能，但是很好看。
+
+
+   5. Parameterize Method令函数携带参数 308
+若干函数做了类似的工作，但在函数本体中却包含了不同的值：建立单一函数，以参数表达那些不同的值。
+
+
+   6. Replace Parameter with Explicit Methods以明确函数取代参数 310
+你有一个函数，其中完全取决于参数值而采取不同行为：针对该参数的每一个可能值，建立一个独立函数。
+参数在一个方法内被重复使用，可以针对参数提取一个方法。
+
+
+   7. Preserve Whole Object保持对象完整 313
+你从某个对象中取出若干值，将它们作为某一次函数调用时的参数：改为传递整个对象。
+与其对象的属性设为参数，不如直接传送对象。在里面调参。
+如果想使用这个手法前没有对象，先使用Introduce Parameter Object
+
+
+   8. Replace Parameter with Methods以函数取代参数 317
+对象调用某个函数，并将所得结果作为参数，传递给另一个函数。而接受该参数的函数本身也能够调用前一个函数：让参数接受者去除该项参数，并直接调用前一个函数。
+去除冗余调用函数的参数。
+
+
+   9. Introduce Parameter Object引入参数对象 320
+某些参数总是很自然地同时出现：以一个对象取代这些参数。
+
+
+   10. Remove Setting Method移除设值函数 325
+类中的某个字段应该在对象创建时被设值，然后就不再改变：去掉该字段的所有设值函数。
+
+
+   11. Hide Method隐藏函数 328
+有一个函数，从来没有被其他任何类用到：将这个函数修改为private。
+
+
+   12. Replace Constructor with Facotry Method以工厂函数取代构造函数 329
+你希望在创建对象时不仅仅是做简单的建构动作：将构造函数替换为工厂函数。
+工厂函数产生的对象可以做更多事情。
+
+
+   13. Encapsulate Downcast封装向下转型 333
+某个函数返回的对象，需要由函数调用者执行向下转型（downcast）：将向下转型动作移到函数中。
+向下转型应尽量少做，但有时候要告诉客户转型类型，这时也是必须的。
+使用这个手法前，应先考虑是否可以以模板类代替。
+
+
+   14. Replace Error Code wtih Exception以异常取代错误码 335
+某个函数返回一个特定的代码，用以表示某种错误情况：改用异常。
+灵活使用异常不仅方便理解，也提供方便的处理方式。
+
+
+   15. Replace Exception with Test以测试取代异常 340
+面对一个调用者可以预先检查的条件，你抛出一个异常：修改调用者，使它在调用函数之前先做检查。
+与其catch异常，不如先if把异常情况过滤。
+
+
+处理概括关系的手法。
+
+Pull Up Field字段上移 345
+2个子类拥有相同的字段：将该字段移至超类。
+
+
+   2. Pull Up Method函数上移 347
+有些函数，在各个子类中产生完全相同的结果：将该函数移至超类。
+
+
+   3. Pull Up Constructor Body构造函数本体上移 350
+你在各个子类中拥有一些构造函数，它们的本体几乎完全一致：在超类中新建一个构造函数，并在子类构造函数中调用它。
+如果过于复杂，使用Replace Constructor with Factory Method。
+
+
+   4. Pull Down Method函数下移 353
+超类中的某个函数只与部分子类有关：将这个函数移到相关的那些子类去。
+public声明可以改为protected
+
+   5. Push Down Filed字段下移 354
+超类中的某个字段只被部分子类用到：将这个字段移到需要它的那些子类去。
+
+   6. Extract Subclass提炼子类 355
+类中的某些特性只被某些实例用到：新建一个子类，将上面所说的那一部分特性移到子类中。
+
+   7. Extract Superclass提炼超类 361
+2个类有相似特性：为这2个类建立一个超类，将相同特性移至超类。
+
+
+   8. Extract Interface提炼接口
+若干客户使用类接口中的同一子集，或者2个类的接口部分相同：将相同的子集提炼到一个独立接口中。
+提炼接口能帮助看清子类里的东西。
+
+
+   9. Collapse Hierarchy折叠继承体系 369
+超类和子类之间无太大区别：将它们和为一体。
+
+   10. Form TemPlate Method塑造模板函数 370
+你有一些子类，其中相应的某些函数以相同的顺序执行类似的操作，但各个操作的细节不同：将这些操作分别放进独立的函数中，并保持它们都有相同的签名，于是原函数也就变得相同了，然后将原函数上移至超类。
+继承是避免重复行为的一个强大工具。
+
+
+   11. Replace Inheritance with Delegation以委托取代继承 377
+某个子类只使用超类接口中的一部分，或是根本不需要继承而来的数据：在子类中新建一个字段用以保存超类；调整子类函数，令它改而委托超类；然后去掉2者之间的继承关系。
+如果接受传统说法：子类可以只使用超类功能的一部分。会导致意图南辕北辙，应该将他去除。使用委托可以很好解决这种情况。
+
+   12. Replace Delegation with Inheritance以继承取代委托 380
+你在2个类之间使用委托关系，并经常为整个接口编写许多极简单的委托函数：让委托类继承受托类。
+与11相反。
+
+
+大型重构系手法。
+
+
+Tease Apart Inheritance梳理并分解继承体系 387
+某个继承体系同时承担两项责任：建立两个继承体系, 并通过委托关系让其中一个可以调用另一个。
+
+
+   2. Convert Procedural Design to Objects将过程化设计转化为对象设计
+你手上有一些传统过程化风格的代码：将数据记录变成对象, 将大块的行为分成小块, 并将行为移入相关对象中.
+
+
+   3. Separate Domain from Presentation将领域和表述/显示分离
+某些GUI类之中包含了领域逻辑：将领域逻辑分离出来, 为它们建立独立的领域类.
+
+   4. Extract Hierarchy提炼继承体系 400
+你有某个类做了太多工作, 其中一部分工作是以大量条件表达式完成的：建立继承体系, 以一个子类表示一种特殊情况.
